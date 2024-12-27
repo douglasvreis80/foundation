@@ -1,0 +1,8 @@
+services:
+  app:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./evento_futebol.db:/app/evento_futebol.db  # Persistir o banco de dados localmente
+
