@@ -4,5 +4,6 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - ./evento_futebol.db:/app/evento_futebol.db  # Persistir o banco de dados localmente
-
+      - ./partidas.db:/app/partidas.db  # Persistir o banco de dados localmente
+    environment:
+      FLASK_RUN_HOST: 0.0.0.0  # Garantir que o Flask escute em todas as interfaces

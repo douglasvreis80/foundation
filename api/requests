@@ -1,43 +1,32 @@
-curl -X POST http://localhost:5000/evento \
+curl -X POST http://localhost:5000/partida \
 -H "Content-Type: application/json" \
 -d '{
-    "data": "2024-12-21",
-    "hora": "15:30",
-    "local": "Estádio Municipal",
-    "slots_primarios": 10,
-    "slots_goleiros": 2,
-    "slots_espera": 5
+  "data": "2024-12-28",
+  "hora": "14:30",
+  "local": "Estádio Central",
+  "slots_primarios": 10,
+  "slots_goleiros": 2,
+  "slots_espera": 5,
+  "jogadores": [
+    {"nome": "Jogador 1", "posicao": "jogador"},
+    {"nome": "Jogador 2", "posicao": "goleiro"}
+  ]
 }'
 
+curl -X GET http://localhost:5000/partida/1
 
 curl -X POST http://localhost:5000/jogador \
 -H "Content-Type: application/json" \
 -d '{
-    "nome": "João da Silva",
-    "posicao": "jogador",
-    "evento_id": 1
+  "nome": "Jogador 3",
+  "posicao": "jogador",
+  "partida_id": 1
 }'
 
 
 curl -X DELETE http://localhost:5000/jogador \
 -H "Content-Type: application/json" \
 -d '{
-    "nome": "João da Silva",
-    "evento_id": 1
-}'
-
-curl -X POST http://localhost:5000/evento \
--H "Content-Type: application/json" \
--d '{
-    "data": "2024-12-25",
-    "hora": "18:00",
-    "local": "Estádio Municipal",
-    "slots_primarios": 5,
-    "slots_goleiros": 2,
-    "slots_espera": 3,
-    "jogadores": [
-        {"nome": "João da Silva", "posicao": "jogador"},
-        {"nome": "Pedro Santos", "posicao": "goleiro"},
-        {"nome": "Carlos Oliveira", "posicao": "jogador"}
-    ]
+  "nome": "Jogador 1",
+  "partida_id": 1
 }'
