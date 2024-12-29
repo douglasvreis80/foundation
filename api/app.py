@@ -25,6 +25,11 @@ class Jogador(db.Model):
     status = db.Column(db.String(10), nullable=False)  # 'principais', 'goleiros', 'espera'
     partida_id = db.Column(db.Integer, db.ForeignKey('partida.id'), nullable=False)
 
+    __table_args__ = (
+        db.UniqueConstraint('nome', 'partida_id', name='uq_jogador_partida'),
+    )
+
+
 @app.after_request
 def aplicar_codificacao(response):
     response.headers['Content-Type'] = 'application/json; charset=utf-8'
@@ -102,14 +107,20 @@ def adicionar_jogador_api():
     dados = request.json
     partida_id = dados.get('partida_id')  # Agora esperamos o partida_id no corpo da requisição
     
-    # Buscar o partida pelo ID
+    # Buscar a partida pelo ID
     partida = Partida.query.get(partida_id)
     if not partida:
-        return jsonify({"status": "erro", "mensagem": "partida não encontrado."})
+        return jsonify({"status": "erro", "mensagem": "Partida não encontrada."})
+
+    # Verificar se o jogador já está associado a essa partida
+    jogador_existente = Jogador.query.filter_by(nome=dados['nome'], partida_id=partida.id).first()
+    if jogador_existente:
+        return jsonify({"status": "erro", "mensagem": f"O jogador {dados['nome']} já está registrado nesta partida."})
 
     posicao = dados.get('posicao', 'jogador')
     status = 'principais' if posicao == 'jogador' else 'goleiros'
 
+    # Lógica de slots
     if status == 'principais' and Jogador.query.filter_by(partida_id=partida.id, status='principais').count() < partida.slots_primarios:
         jogador = Jogador(nome=dados['nome'], posicao=posicao, status='principais', partida_id=partida.id)
     elif status == 'goleiros' and Jogador.query.filter_by(partida_id=partida.id, status='goleiros').count() < partida.slots_goleiros:
@@ -121,7 +132,8 @@ def adicionar_jogador_api():
 
     db.session.add(jogador)
     db.session.commit()
-    return jsonify({"status": "sucesso", "mensagem": f"{dados['nome']} adicionado como {posicao}"})
+    return jsonify({"status": "sucesso", "mensagem": f"{dados['nome']} adicionado como {posicao}."})
+
 
 
 @app.route('/jogador', methods=['DELETE'])
@@ -131,7 +143,7 @@ def remover_jogador_api():
     partida_id = dados.get('partida_id')  # Esperando o partida_id na requisição
     
     # Buscar o partida pelo ID
-    partida = partida.query.get(partida_id)
+    partida = Partida.query.get(partida_id)
     if not partida:
         return jsonify({"status": "erro", "mensagem": "partida não encontrado."})
     
