@@ -12,7 +12,7 @@ const client = new Client({
 const API_URL = process.env.API_URL; // URL da API a partir da variável de ambiente
 
 client.on('ready', () => {
-    console.log('FuteBOT is ready!');
+    console.log('FuteBOT 1 is ready!');
 });
 
 client.on('qr', qr => {
@@ -20,40 +20,56 @@ client.on('qr', qr => {
 });
 
 // Função para adicionar jogador
-async function adicionarJogador(nome, posicao, eventoId, msg) {
+async function adicionarJogador(nome, posicao, partidaId, msg) {
     try {
         const response = await axios.post(`${API_URL}/jogador`, {
             nome,
             posicao,
-            evento_id: eventoId,
+            partida_id: partidaId,
         });
         msg.reply(`Jogador ${nome} adicionado com sucesso como ${posicao}.`);
     } catch (error) {
         console.error(error);
-        msg.reply('Erro ao adicionar jogador. Verifique o servidor.');
+
+        if (error.response && error.response.data && error.response.data.mensagem) {
+            // Mensagem de erro retornada pelo servidor
+            msg.reply(`Erro: ${error.response.data.mensagem}`);
+        } else {
+            // Erro genérico (servidor não retornou mensagem)
+            msg.reply('Erro ao adicionar jogador. Verifique o servidor.');
+        }
     }
 }
 
+
 // Função para remover jogador
-async function removerJogador(nome, eventoId, msg) {
+async function removerJogador(nome, partidaId, msg) {
     try {
         const response = await axios.delete(`${API_URL}/jogador`, {
             data: {
                 nome,
-                evento_id: eventoId,
+                partida_id: partidaId,
             },
         });
         msg.reply(`Jogador ${nome} removido com sucesso.`);
+
     } catch (error) {
         console.error(error);
-        msg.reply('Erro ao remover jogador. Verifique o servidor.');
+
+        if (error.response && error.response.data && error.response.data.mensagem) {
+            // Mensagem de erro retornada pelo servidor
+            msg.reply(`Erro: ${error.response.data.mensagem}`);
+        } else {
+            // Erro genérico (servidor não retornou mensagem)
+            msg.reply('Erro ao adicionar jogador. Verifique o servidor.');
+        }
     }
 }
 
 // Função para listar detalhes da partida
-async function listarDetalhesPartida(eventoId, msg) {
+async function listarDetalhesPartida(partidaId, msg) {
     try {
-        const response = await axios.get(`${API_URL}/evento/${eventoId}`);
+        const response = await axios.get(`${API_URL}/partida/${partidaId}`);
         const { data, hora, jogadores, local } = response.data;
 
         const detalhes = `
@@ -76,13 +92,20 @@ ${jogadores.espera.length > 0 ? jogadores.espera.map(e => `  - ${e}`).join('\n')
         msg.reply(detalhes.trim());
     } catch (error) {
         console.error(error);
-        msg.reply('Erro ao obter os detalhes da partida. Verifique o servidor.');
+
+        if (error.response && error.response.data && error.response.data.mensagem) {
+            // Mensagem de erro retornada pelo servidor
+            msg.reply(`Erro: ${error.response.data.mensagem}`);
+        } else {
+            // Erro genérico (servidor não retornou mensagem)
+            msg.reply('Erro ao adicionar jogador. Verifique o servidor.');
+        }
     }
 }
 
 // Event listeners para os comandos
 client.on('message', async msg => {
-    const eventoId = 1; // ID fixo para o evento
+    const partidaId = 1; // ID fixo para o partida
 
     if (msg.body === '!ping') {
         msg.reply('pong');
@@ -90,22 +113,22 @@ client.on('message', async msg => {
 
     if (msg.body === '!dentro') {
         const nome = msg.author || 'Jogador Desconhecido';
-        await adicionarJogador(nome, 'jogador', eventoId, msg);
+        await adicionarJogador(nome, 'jogador', partidaId, msg);
     }
 
     if (msg.body === '!fora') {
         const nome = msg.author || 'Jogador Desconhecido';
-        await removerJogador(nome, eventoId, msg);
+        await removerJogador(nome, partidaId, msg);
     }
 
     if (msg.body === '!goleiro') {
         const nome = msg.author || 'Jogador Desconhecido';
-        await adicionarJogador(nome, 'goleiro', eventoId, msg);
+        await adicionarJogador(nome, 'goleiro', partidaId, msg);
     }
 
     if (msg.body === '!lista') {
         msg.reply('Buscando os detalhes da partida...');
-        await listarDetalhesPartida(eventoId, msg);
+        await listarDetalhesPartida(partidaId, msg);
     }
 });
 

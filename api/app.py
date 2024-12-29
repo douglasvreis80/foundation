@@ -73,7 +73,7 @@ def criar_partida_api():
         elif Jogador.query.filter_by(partida_id=nova_partida.id, status='espera').count() < nova_partida.slots_espera:
             jogador = Jogador(nome=jogador_data['nome'], posicao=posicao, status='espera', partida_id=nova_partida.id)
         else:
-            return jsonify({"status": "erro", "mensagem": f"Não foi possível adicionar o jogador {jogador_data['nome']} devido à falta de slots disponíveis."})
+            return jsonify({"status": "erro", "mensagem": f"Não foi possível adicionar o jogador {jogador_data['nome']} devido à falta de vagas disponíveis."})
 
         db.session.add(jogador)
 
@@ -85,7 +85,7 @@ def criar_partida_api():
 def mostrar_partida_api(partida_id):
     partida = Partida.query.get(partida_id)
     if not partida:
-        return jsonify({"status": "erro", "mensagem": "partida não encontrado."})
+        return jsonify({"status": "erro", "mensagem": "partida não encontrada."})
 
     jogadores = Jogador.query.filter_by(partida_id=partida.id).all()
     jogadores_dict = {
@@ -106,16 +106,16 @@ def mostrar_partida_api(partida_id):
 def adicionar_jogador_api():
     dados = request.json
     partida_id = dados.get('partida_id')  # Agora esperamos o partida_id no corpo da requisição
-    
+
     # Buscar a partida pelo ID
     partida = Partida.query.get(partida_id)
     if not partida:
-        return jsonify({"status": "erro", "mensagem": "Partida não encontrada."})
+        return jsonify({"status": "erro", "mensagem": "Partida não encontrada."}), 404
 
     # Verificar se o jogador já está associado a essa partida
     jogador_existente = Jogador.query.filter_by(nome=dados['nome'], partida_id=partida.id).first()
     if jogador_existente:
-        return jsonify({"status": "erro", "mensagem": f"O jogador {dados['nome']} já está registrado nesta partida."})
+        return jsonify({"status": "erro", "mensagem": f"O jogador {dados['nome']} já está registrado nesta partida."}), 400
 
     posicao = dados.get('posicao', 'jogador')
     status = 'principais' if posicao == 'jogador' else 'goleiros'
@@ -128,11 +128,12 @@ def adicionar_jogador_api():
     elif Jogador.query.filter_by(partida_id=partida.id, status='espera').count() < partida.slots_espera:
         jogador = Jogador(nome=dados['nome'], posicao=posicao, status='espera', partida_id=partida.id)
     else:
-        return jsonify({"status": "erro", "mensagem": "Todos os slots estão cheios."})
+        return jsonify({"status": "erro", "mensagem": "Todas as vagas estão ocupadas."}), 400
 
     db.session.add(jogador)
     db.session.commit()
-    return jsonify({"status": "sucesso", "mensagem": f"{dados['nome']} adicionado como {posicao}."})
+    return jsonify({"status": "sucesso", "mensagem": f"{dados['nome']} adicionado como {posicao}."}), 201
+
 
 
 
@@ -145,7 +146,7 @@ def remover_jogador_api():
     # Buscar o partida pelo ID
     partida = Partida.query.get(partida_id)
     if not partida:
-        return jsonify({"status": "erro", "mensagem": "partida não encontrado."})
+        return jsonify({"status": "erro", "mensagem": "partida não encontrada."})
     
     # Buscar o jogador pelo nome e partida_id
     jogador = Jogador.query.filter_by(nome=nome_jogador, partida_id=partida.id).first()
@@ -159,4 +160,3 @@ def remover_jogador_api():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
-
